@@ -134,13 +134,13 @@ const Signup = () => {
                         </div>
 
                         <div className="mt-3 text-xs flex justify-between items-center text-[#002D74]">
-                            <p>Don't have an account?</p>
-                            <button className="py-2 px-5 bg-white border rounded-xl hover:scale-110 duration-300">Register</button>
+                            <p>Already Have An Account?</p>
+                            <button className="py-2 px-5 bg-white border rounded-xl hover:scale-110 duration-300"><a href="/signin">Login</a></button>
                         </div>
                     </div>
 
                     <div className="md:block hidden w-1/2">
-                        <img className="rounded-2xl" src="https://images.unsplash.com/photo-1616606103915-dea7be788566?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1887&q=80" />
+                        <img className="rounded-2xl" src="https://www.davestravelpages.com/wp-content/uploads/2019/08/Quote-24.jpg" />
                     </div>
                 </div>
             </section>
