@@ -3,8 +3,8 @@
 import { auth, firestore } from '@app/firebase/config';
 import { useRouter } from "next/navigation";
 import React, { useState } from 'react';
-import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { useSignInWithEmailAndPassword, useSignInWithGoogle } from 'react-firebase-hooks/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import '@styles/globals.css';
 
@@ -13,6 +13,7 @@ const SignIn = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [signInWithEmailAndPassword] = useSignInWithEmailAndPassword(auth);
+    const [signInWithGoogle, googleError] = useSignInWithGoogle(auth);
     const router = useRouter();
 
     const handleSignIn = async (e) => {
@@ -43,6 +44,40 @@ const SignIn = () => {
         }
     };
 
+    const handleGoogleAuth = async () => {
+        try {
+            const newUser = await signInWithGoogle();
+            if (googleError) {
+                toast.error(googleError.message);
+                return;
+            }
+            const userRef = doc(firestore, "users", newUser.user.uid);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                // User exists, retrieve and store data
+                const userDoc = userSnap.data();
+                localStorage.setItem("user-info", JSON.stringify(userDoc));
+                router.push('/');
+            } else {
+                // New user, create a document
+                const userDoc = {
+                    uid: newUser.user.uid,
+                    email: newUser.user.email,
+                    username: newUser.user.email.split("@")[0],
+                    fullName: newUser.user.displayName,
+                    tasks: [],
+                    createdAt: Date.now(),
+                };
+                await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
+                localStorage.setItem("user-info", JSON.stringify(userDoc));
+                router.push('/');
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
     return (
         <div>
             <section className="bg-gray-50 min-h-screen flex items-center justify-center">
@@ -51,7 +86,7 @@ const SignIn = () => {
                         <h2 className="font-bold text-xl head_text">Login</h2>
                         <p className="text-sm mt-4 orange_gradient">If you are already a member, easily log in</p>
 
-                        <form className="flex flex-col gap-4" >
+                        <form className="flex flex-col gap-4" onSubmit={handleSignIn}>
                             <input 
                                 className="p-2 mt-8 rounded-xl border" 
                                 type="email" 
@@ -76,9 +111,8 @@ const SignIn = () => {
                             </div>
                             <button 
                                 className="bg-[#002D74] rounded-xl text-white py-2 hover:scale-105 duration-300"
-                                
+                                type="submit"
                                 disabled={loading}
-                                onClick={handleSignIn}
                             >
                                 {loading ? "Loading..." : "Login"}
                             </button>
@@ -92,7 +126,7 @@ const SignIn = () => {
 
                         <button 
                             className="bg-white border py-2 w-full rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300 text-[#002D74]"
-                            // onClick={handleGoogleSignIn} // Placeholder for Google Sign-In
+                            onClick={handleGoogleAuth}
                         >
                             <svg className="mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="25px">
                                 <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
@@ -102,10 +136,6 @@ const SignIn = () => {
                             </svg>
                             Login with Google
                         </button>
-
-                        <div className="mt-5 text-xs border-b border-[#002D74] py-4 text-[#002D74]">
-                            <a href="#">Forgot your password?</a>
-                        </div>
 
                         <div className="mt-3 text-xs flex justify-between items-center text-[#002D74]">
                             <p>Don't have an account?</p>
